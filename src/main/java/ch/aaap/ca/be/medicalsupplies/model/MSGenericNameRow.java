@@ -2,6 +2,8 @@ package ch.aaap.ca.be.medicalsupplies.model;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.util.Objects;
+
 public class MSGenericNameRow {
 
     private final Long id;
@@ -48,6 +50,16 @@ public class MSGenericNameRow {
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
+    }
+
+    public boolean hasCategory(final String category) {
+
+        if (category == null || category.isEmpty()) {
+            return false;
+        }
+
+        return (Objects.equals(category, getCategory1()) || Objects.equals(category, getCategory2()) || Objects.equals(category, getCategory3()) || Objects.equals(category, getCategory4()));
+
     }
 
 

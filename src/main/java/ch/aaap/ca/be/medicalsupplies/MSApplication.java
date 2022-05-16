@@ -1,10 +1,9 @@
 package ch.aaap.ca.be.medicalsupplies;
 
 import ch.aaap.ca.be.medicalsupplies.data.CSVUtil;
-import ch.aaap.ca.be.medicalsupplies.data.MSProductIdentity;
 import ch.aaap.ca.be.medicalsupplies.model.MSGenericNameRow;
-import ch.aaap.ca.be.medicalsupplies.model.MSProductDTO;
 import ch.aaap.ca.be.medicalsupplies.model.MSProductRow;
+import ch.aaap.ca.be.medicalsupplies.model.MSStats;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -36,9 +35,7 @@ public class MSApplication {
         System.err.println("1st of generic name list: " + main.genericNames.iterator().next());
         System.err.println("1st of registry list: " + main.registry.iterator().next());
 
-        MSProductDTO msProductDTOS = main.createModel(main.genericNames, main.registry);
-
-//        main.msProductDTOS.equals(msProductDTOS);
+        MSStats msProductDTOS = main.createModel(main.genericNames, main.registry);
 
         main.numberOfUniqueGenericNames(msProductDTOS);
         main.numberOfDuplicateGenericNames(msProductDTOS);
@@ -48,6 +45,8 @@ public class MSApplication {
 
         main.nameOfCompanyWhichIsProducerAndLicenseHolderForMostNumberOfMSProducts(msProductDTOS);
         main.numberOfMSProductsByProducerName(msProductDTOS, "roche");
+
+        main.findMSProductsWithGenericNameCategory(main.genericNames, main.registry, "05 - Bolnička, aparaturna oprema");
     }
 
     /**
@@ -57,17 +56,18 @@ public class MSApplication {
      * @param productRows
      * @return
      */
-    public MSProductDTO createModel(final Set<MSGenericNameRow> genericNameRows, final Set<MSProductRow> productRows) {
+    public MSStats createModel(final Set<MSGenericNameRow> genericNameRows, final Set<MSProductRow> productRows) {
 
         if (genericNameRows == null || genericNameRows.size() == 0 || productRows == null || productRows.size() == 0) {
             throw new MSException(MSException.NO_DATA);
         }
 
-        return MSProductDTO.builder()
-                .nameStats(generateNameStats(genericNameRows))
-                .productGenericNameStats(generateProductGenericNameStats(genericNameRows, productRows))
-                .producerStats(generateProducerStats(productRows))
-                .producerLicenseHolderStats(generateSameProducerLicenceNameStats(productRows))
+        //I am aware this can be done in one pass
+        return MSStats.builder()
+                .genericNameOccurrenceStats(generateNameOccurrenceStats(genericNameRows))
+                .genericNameExistsStats(generateNameExistsStats(genericNameRows, productRows))
+                .producerProductCountStats(generateProducerProductStats(productRows))
+                .producerLicenseProductCountStats(generateSameProducerLicenceNameStats(productRows))
                 .build();
     }
     /* MS Generic Names */
@@ -77,9 +77,9 @@ public class MSApplication {
      *
      * @return
      */
-    public Object numberOfUniqueGenericNames(final MSProductDTO msProductDTOS) {
+    public Object numberOfUniqueGenericNames(final MSStats msProductDTOS) {
 
-        return msProductDTOS.getNameStats().size();
+        return msProductDTOS.getGenericNameOccurrenceStats().size();
     }
 
     /**
@@ -87,9 +87,10 @@ public class MSApplication {
      *
      * @return
      */
-    public Object numberOfDuplicateGenericNames(final MSProductDTO msProductDTOS) {
+    public Object numberOfDuplicateGenericNames(final MSStats msProductDTOS) {
 
-        return msProductDTOS.getNameStats().entrySet().stream().filter(stringAtomicIntegerEntry -> stringAtomicIntegerEntry.getValue().get() > 1).count();
+        return msProductDTOS.getGenericNameOccurrenceStats().entrySet().stream()
+                .filter(entry -> entry.getValue().get() > 1).count();
     }
 
     /* MS Products */
@@ -100,8 +101,8 @@ public class MSApplication {
      *
      * @return
      */
-    public Object numberOfMSProductsWithGenericName(final MSProductDTO msProductDTOS) {
-        return msProductDTOS.getProductGenericNameStats().get(HAS_GENERIC_NAME).get();
+    public Object numberOfMSProductsWithGenericName(final MSStats msProductDTOS) {
+        return msProductDTOS.getGenericNameExistsStats().get(HAS_GENERIC_NAME).get();
     }
 
     /**
@@ -110,8 +111,8 @@ public class MSApplication {
      *
      * @return
      */
-    public Object numberOfMSProductsWithoutGenericName(final MSProductDTO msProductDTOS) {
-        return msProductDTOS.getProductGenericNameStats().get(NO_GENERIC_NAME).get();
+    public Object numberOfMSProductsWithoutGenericName(final MSStats msProductDTOS) {
+        return msProductDTOS.getGenericNameExistsStats().get(NO_GENERIC_NAME).get();
     }
 
     /**
@@ -120,8 +121,8 @@ public class MSApplication {
      *
      * @return
      */
-    public Object nameOfCompanyWhichIsProducerAndLicenseHolderForMostNumberOfMSProducts(final MSProductDTO msProductDTOS) {
-        return msProductDTOS.getProducerLicenseHolderStats().entrySet().stream()
+    public Object nameOfCompanyWhichIsProducerAndLicenseHolderForMostNumberOfMSProducts(final MSStats msProductDTOS) {
+        return msProductDTOS.getProducerLicenseProductCountStats().entrySet().stream()
                 .max(Map.Entry.comparingByValue(Comparator.comparingInt(AtomicInteger::get)))
                 .map(Map.Entry::getKey)
                 .orElse("");
@@ -134,8 +135,8 @@ public class MSApplication {
      * @param companyName
      * @return
      */
-    public Object numberOfMSProductsByProducerName(final MSProductDTO msProductDTOS, final String companyName) {
-        return msProductDTOS.getProducerStats().entrySet().stream()
+    public Object numberOfMSProductsByProducerName(final MSStats msProductDTOS, final String companyName) {
+        return msProductDTOS.getProducerProductCountStats().entrySet().stream()
                 .filter(entry -> entry.getKey().toUpperCase().contains(companyName.toUpperCase()))
                 .mapToInt(entry -> entry.getValue().get()).sum();
     }
@@ -146,12 +147,28 @@ public class MSApplication {
      * @param category
      * @return
      */
-    public Set<MSProductIdentity> findMSProductsWithGenericNameCategory(String category) {
-        throw new MSException(MSException.DEFAULT_MESSAGE);
+    //TODO: Move to model
+    public int findMSProductsWithGenericNameCategory(final Set<MSGenericNameRow> genericNameRows, final Set<MSProductRow> productRows, final String category) {
+
+        if (category == null || category.isEmpty()) {
+            return 0;
+        }
+
+        AtomicInteger i = new AtomicInteger();
+
+        for (MSProductRow msProductRow : productRows) {
+
+            genericNameRows.stream()
+                    .filter(msGenericNameRow -> msGenericNameRow.getName().equals(msProductRow.getGenericName()))
+                    .filter(msGenericNameRow -> msGenericNameRow.hasCategory(category))
+                    .findFirst()
+                    .map(msGenericNameRow -> i.getAndIncrement());
+        }
+        return i.get();
     }
 
 
-    private Map<String, AtomicInteger> generateProducerStats(Set<MSProductRow> productRows) {
+    private Map<String, AtomicInteger> generateProducerProductStats(Set<MSProductRow> productRows) {
         Map<String, AtomicInteger> producerStats = new HashMap<>();
 
         for (MSProductRow msProductRow : productRows) {
@@ -175,7 +192,8 @@ public class MSApplication {
         return sameProducerLicenceNameStats;
     }
 
-    private Map<String, AtomicInteger> generateProductGenericNameStats(final Set<MSGenericNameRow> genericNameRows, final Set<MSProductRow> productRows) {
+
+    private Map<String, AtomicInteger> generateNameExistsStats(final Set<MSGenericNameRow> genericNameRows, final Set<MSProductRow> productRows) {
 
         Map<String, AtomicInteger> productStats = new ConcurrentHashMap<>();
         productStats.put(HAS_GENERIC_NAME, new AtomicInteger(0));
@@ -190,9 +208,10 @@ public class MSApplication {
                     .orElseGet(() -> productStats.get(NO_GENERIC_NAME).getAndIncrement());
         }
         return productStats;
+
     }
 
-    private Map<String, AtomicInteger> generateNameStats(Set<MSGenericNameRow> genericNameRows) {
+    private Map<String, AtomicInteger> generateNameOccurrenceStats(Set<MSGenericNameRow> genericNameRows) {
         Map<String, AtomicInteger> nameStats = new HashMap<>();
 
         for (MSGenericNameRow msGenericNameRow : genericNameRows) {

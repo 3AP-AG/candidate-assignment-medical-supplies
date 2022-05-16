@@ -13,12 +13,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class MSProductDTO {
+public class MSStats {
 
-    Map<String, AtomicInteger> nameStats = new HashMap<>();
-    Map<String, AtomicInteger> productGenericNameStats = new HashMap<>();
-    Map<String, AtomicInteger> producerLicenseHolderStats = new HashMap<>();
-    Map<String, AtomicInteger> producerStats = new HashMap<>();
+    Map<String, AtomicInteger> genericNameOccurrenceStats = new HashMap<>();
+    Map<String, AtomicInteger> genericNameExistsStats = new HashMap<>();
+    Map<String, AtomicInteger> producerLicenseProductCountStats = new HashMap<>();
+    Map<String, AtomicInteger> producerProductCountStats = new HashMap<>();
 
     private MSProductRow msProductRow;
     private MSGenericNameRow msGenericNameRow;
@@ -29,13 +29,13 @@ public class MSProductDTO {
         if (obj == null) {
             return false;
         }
-        if (!(obj instanceof MSProductDTO)) {
+        if (!(obj instanceof MSStats)) {
             return false;
         }
 
-        MSProductDTO msProductDTO = (MSProductDTO) obj;
+        MSStats msStats = (MSStats) obj;
 
-        return msProductDTO.getMsProductRow().getGenericName().equals(this.getMsProductRow().getGenericName());
+        return msStats.getMsProductRow().getGenericName().equals(this.getMsProductRow().getGenericName());
     }
 
 }
