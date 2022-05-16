@@ -1,7 +1,7 @@
 /**
  * MSProductRow
  */
-package ch.aaap.ca.be.medicalsupplies.data;
+package ch.aaap.ca.be.medicalsupplies.model;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;

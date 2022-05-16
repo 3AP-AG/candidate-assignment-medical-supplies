@@ -1,17 +1,18 @@
 package ch.aaap.ca.be.medicalsupplies.data;
 
+import ch.aaap.ca.be.medicalsupplies.MSException;
+import ch.aaap.ca.be.medicalsupplies.model.MSGenericNameRow;
+import ch.aaap.ca.be.medicalsupplies.model.MSProductRow;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.HashSet;
 import java.util.Set;
-
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
-
-import ch.aaap.ca.be.medicalsupplies.MSException;
 
 /**
  * This is a helper class to read the provided CSV

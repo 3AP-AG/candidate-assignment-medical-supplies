@@ -1,11 +1,17 @@
 package ch.aaap.ca.be.medicalsupplies;
 
-import java.util.Set;
-
 import ch.aaap.ca.be.medicalsupplies.data.CSVUtil;
-import ch.aaap.ca.be.medicalsupplies.data.MSGenericNameRow;
 import ch.aaap.ca.be.medicalsupplies.data.MSProductIdentity;
-import ch.aaap.ca.be.medicalsupplies.data.MSProductRow;
+import ch.aaap.ca.be.medicalsupplies.model.MSGenericNameRow;
+import ch.aaap.ca.be.medicalsupplies.model.MSProductDTO;
+import ch.aaap.ca.be.medicalsupplies.model.MSProductRow;
+
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MSApplication {
 
