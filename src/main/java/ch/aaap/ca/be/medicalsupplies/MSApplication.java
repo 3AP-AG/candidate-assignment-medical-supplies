@@ -6,7 +6,6 @@ import ch.aaap.ca.be.medicalsupplies.model.MSProductRow;
 import ch.aaap.ca.be.medicalsupplies.model.MSStats;
 
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,12 +17,12 @@ public class MSApplication {
     public static final String NO_GENERIC_NAME = "noGenericName";
     private final Set<MSGenericNameRow> genericNames;
     private final Set<MSProductRow> registry;
-//    private final MSProductDTO msProductDTOS;
+    private final MSStats msStats;
 
     public MSApplication() {
         genericNames = CSVUtil.getGenericNames();
         registry = CSVUtil.getRegistry();
-//        msProductDTOS = createModel(genericNames, registry);
+        msStats = createModel(genericNames, registry);
     }
 
     public static void main(String[] args) {
@@ -35,16 +34,14 @@ public class MSApplication {
         System.err.println("1st of generic name list: " + main.genericNames.iterator().next());
         System.err.println("1st of registry list: " + main.registry.iterator().next());
 
-        MSStats msProductDTOS = main.createModel(main.genericNames, main.registry);
+        main.numberOfUniqueGenericNames();
+        main.numberOfDuplicateGenericNames();
 
-        main.numberOfUniqueGenericNames(msProductDTOS);
-        main.numberOfDuplicateGenericNames(msProductDTOS);
+        main.numberOfMSProductsWithGenericName();
+        main.numberOfMSProductsWithoutGenericName();
 
-        main.numberOfMSProductsWithGenericName(msProductDTOS);
-        main.numberOfMSProductsWithoutGenericName(msProductDTOS);
-
-        main.nameOfCompanyWhichIsProducerAndLicenseHolderForMostNumberOfMSProducts(msProductDTOS);
-        main.numberOfMSProductsByProducerName(msProductDTOS, "roche");
+        main.nameOfCompanyWhichIsProducerAndLicenseHolderForMostNumberOfMSProducts();
+        main.numberOfMSProductsByProducerName("roche");
 
         main.findMSProductsWithGenericNameCategory(main.genericNames, main.registry, "05 - Bolnička, aparaturna oprema");
     }
@@ -77,9 +74,9 @@ public class MSApplication {
      *
      * @return
      */
-    public Object numberOfUniqueGenericNames(final MSStats msProductDTOS) {
+    public Object numberOfUniqueGenericNames() {
 
-        return msProductDTOS.getGenericNameOccurrenceStats().size();
+        return msStats.getGenericNameOccurrenceStats().size();
     }
 
     /**
@@ -87,9 +84,9 @@ public class MSApplication {
      *
      * @return
      */
-    public Object numberOfDuplicateGenericNames(final MSStats msProductDTOS) {
+    public Object numberOfDuplicateGenericNames() {
 
-        return msProductDTOS.getGenericNameOccurrenceStats().entrySet().stream()
+        return msStats.getGenericNameOccurrenceStats().entrySet().stream()
                 .filter(entry -> entry.getValue().get() > 1).count();
     }
 
@@ -101,8 +98,8 @@ public class MSApplication {
      *
      * @return
      */
-    public Object numberOfMSProductsWithGenericName(final MSStats msProductDTOS) {
-        return msProductDTOS.getGenericNameExistsStats().get(HAS_GENERIC_NAME).get();
+    public Object numberOfMSProductsWithGenericName() {
+        return msStats.getGenericNameExistsStats().get(HAS_GENERIC_NAME).get();
     }
 
     /**
@@ -111,8 +108,8 @@ public class MSApplication {
      *
      * @return
      */
-    public Object numberOfMSProductsWithoutGenericName(final MSStats msProductDTOS) {
-        return msProductDTOS.getGenericNameExistsStats().get(NO_GENERIC_NAME).get();
+    public Object numberOfMSProductsWithoutGenericName() {
+        return msStats.getGenericNameExistsStats().get(NO_GENERIC_NAME).get();
     }
 
     /**
@@ -121,8 +118,8 @@ public class MSApplication {
      *
      * @return
      */
-    public Object nameOfCompanyWhichIsProducerAndLicenseHolderForMostNumberOfMSProducts(final MSStats msProductDTOS) {
-        return msProductDTOS.getProducerLicenseProductCountStats().entrySet().stream()
+    public Object nameOfCompanyWhichIsProducerAndLicenseHolderForMostNumberOfMSProducts() {
+        return msStats.getProducerLicenseProductCountStats().entrySet().stream()
                 .max(Map.Entry.comparingByValue(Comparator.comparingInt(AtomicInteger::get)))
                 .map(Map.Entry::getKey)
                 .orElse("");
@@ -135,8 +132,8 @@ public class MSApplication {
      * @param companyName
      * @return
      */
-    public Object numberOfMSProductsByProducerName(final MSStats msProductDTOS, final String companyName) {
-        return msProductDTOS.getProducerProductCountStats().entrySet().stream()
+    public Object numberOfMSProductsByProducerName(final String companyName) {
+        return msStats.getProducerProductCountStats().entrySet().stream()
                 .filter(entry -> entry.getKey().toUpperCase().contains(companyName.toUpperCase()))
                 .mapToInt(entry -> entry.getValue().get()).sum();
     }
@@ -169,7 +166,7 @@ public class MSApplication {
 
 
     private Map<String, AtomicInteger> generateProducerProductStats(Set<MSProductRow> productRows) {
-        Map<String, AtomicInteger> producerStats = new HashMap<>();
+        Map<String, AtomicInteger> producerStats = new ConcurrentHashMap<>();
 
         for (MSProductRow msProductRow : productRows) {
 
@@ -180,7 +177,7 @@ public class MSApplication {
     }
 
     private Map<String, AtomicInteger> generateSameProducerLicenceNameStats(Set<MSProductRow> productRows) {
-        Map<String, AtomicInteger> sameProducerLicenceNameStats = new HashMap<>();
+        Map<String, AtomicInteger> sameProducerLicenceNameStats = new ConcurrentHashMap<>();
 
         for (MSProductRow msProductRow : productRows) {
 
@@ -212,7 +209,7 @@ public class MSApplication {
     }
 
     private Map<String, AtomicInteger> generateNameOccurrenceStats(Set<MSGenericNameRow> genericNameRows) {
-        Map<String, AtomicInteger> nameStats = new HashMap<>();
+        Map<String, AtomicInteger> nameStats = new ConcurrentHashMap<>();
 
         for (MSGenericNameRow msGenericNameRow : genericNameRows) {
             nameStats.putIfAbsent(msGenericNameRow.getName(), new AtomicInteger(0));
