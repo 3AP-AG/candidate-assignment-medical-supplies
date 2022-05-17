@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MSStats {
 
     Map<String, AtomicInteger> genericNameOccurrenceStats = new HashMap<>();
+    //EnumMap?
     Map<String, AtomicInteger> genericNameExistsStats = new HashMap<>();
     Map<String, AtomicInteger> producerLicenseProductCountStats = new HashMap<>();
     Map<String, AtomicInteger> producerProductCountStats = new HashMap<>();

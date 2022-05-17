@@ -165,7 +165,7 @@ public class MSApplication {
     }
 
 
-    private Map<String, AtomicInteger> generateProducerProductStats(Set<MSProductRow> productRows) {
+    private Map<String, AtomicInteger> generateProducerProductStats(final Set<MSProductRow> productRows) {
         Map<String, AtomicInteger> producerStats = new ConcurrentHashMap<>();
 
         for (MSProductRow msProductRow : productRows) {
@@ -176,7 +176,7 @@ public class MSApplication {
         return producerStats;
     }
 
-    private Map<String, AtomicInteger> generateSameProducerLicenceNameStats(Set<MSProductRow> productRows) {
+    private Map<String, AtomicInteger> generateSameProducerLicenceNameStats(final Set<MSProductRow> productRows) {
         Map<String, AtomicInteger> sameProducerLicenceNameStats = new ConcurrentHashMap<>();
 
         for (MSProductRow msProductRow : productRows) {
@@ -208,7 +208,7 @@ public class MSApplication {
 
     }
 
-    private Map<String, AtomicInteger> generateNameOccurrenceStats(Set<MSGenericNameRow> genericNameRows) {
+    private Map<String, AtomicInteger> generateNameOccurrenceStats(final Set<MSGenericNameRow> genericNameRows) {
         Map<String, AtomicInteger> nameStats = new ConcurrentHashMap<>();
 
         for (MSGenericNameRow msGenericNameRow : genericNameRows) {
