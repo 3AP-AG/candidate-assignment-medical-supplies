@@ -11,8 +11,6 @@ import java.util.stream.Collectors;
 
 public class MSApplication {
 
-    public static final String HAS_GENERIC_NAME = "hasGenericName";
-    public static final String NO_GENERIC_NAME = "noGenericName";
     private final Set<MSGenericNameRow> genericNames;
     private final Set<MSProductRow> registry;
     private final Set<MSProduct> msProducts;
@@ -85,7 +83,7 @@ public class MSApplication {
     /* MS Generic Names */
 
     /**
-     * Method find the number of unique generic names.
+     * Method finds the number of unique generic names.
      *
      * @return
      */
@@ -136,7 +134,7 @@ public class MSApplication {
 
     /**
      * Method finds the name of the company which is both the producer and license holder for the
-     * most number of products.
+     * maximum number of products.
      *
      * @return
      */
@@ -160,13 +158,13 @@ public class MSApplication {
      */
     public Object numberOfMSProductsByProducerName(final String companyName) {
 
-        if (companyName != null && !companyName.isEmpty()) {
-            return msProducts.stream()
-                    .filter(msProduct -> (msProduct.getProducerName()).toUpperCase().startsWith(companyName.toUpperCase()))
-                    .collect(Collectors.toSet()).size();
+        if (companyName == null || companyName.isEmpty()) {
+            return "";
         }
 
-        return "";
+        return msProducts.stream()
+                .filter(msProduct -> (msProduct.getProducerName()).toUpperCase().startsWith(companyName.toUpperCase()))
+                .collect(Collectors.toSet()).size();
     }
 
     /**

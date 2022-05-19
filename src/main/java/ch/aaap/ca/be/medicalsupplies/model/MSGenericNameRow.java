@@ -4,7 +4,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Objects;
 
 public class MSGenericNameRow {
 
@@ -57,15 +56,5 @@ public class MSGenericNameRow {
     public ArrayList<String> getCategories()
     {
         return new ArrayList<>(Arrays.asList(getCategory1(), getCategory2(), getCategory3(), getCategory4()));
-    }
-
-    public boolean hasCategory(final String category) {
-
-        if (category == null || category.isEmpty()) {
-            return false;
-        }
-
-        return (Objects.equals(category, getCategory1()) || Objects.equals(category, getCategory2()) || Objects.equals(category, getCategory3()) || Objects.equals(category, getCategory4()));
-
     }
 }
