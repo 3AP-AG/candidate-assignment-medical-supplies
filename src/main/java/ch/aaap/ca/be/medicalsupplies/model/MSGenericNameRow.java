@@ -2,6 +2,8 @@ package ch.aaap.ca.be.medicalsupplies.model;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class MSGenericNameRow {
@@ -52,6 +54,11 @@ public class MSGenericNameRow {
         return ToStringBuilder.reflectionToString(this);
     }
 
+    public ArrayList<String> getCategories()
+    {
+        return new ArrayList<>(Arrays.asList(getCategory1(), getCategory2(), getCategory3(), getCategory4()));
+    }
+
     public boolean hasCategory(final String category) {
 
         if (category == null || category.isEmpty()) {
@@ -61,23 +68,4 @@ public class MSGenericNameRow {
         return (Objects.equals(category, getCategory1()) || Objects.equals(category, getCategory2()) || Objects.equals(category, getCategory3()) || Objects.equals(category, getCategory4()));
 
     }
-
-
-    //This is probably the easiest solution but we need duplicates for other steps
-//    @Override
-//    public boolean equals(Object obj) {
-//        if (obj == null) {
-//            return false;
-//        }
-//        if (!(obj instanceof MSGenericNameRow)) {
-//            return false;
-//        }
-//
-//        return this.getName().equals(((MSGenericNameRow) obj).getName());
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        return getName().hashCode();
-//    }
 }

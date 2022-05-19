@@ -16,7 +16,7 @@ public class MSTest {
 
     @Test
     public void returnsCorrectNumberOfDuplicateGenericNames() {
-        assertEquals("Number of duplicate generic names", 12L, sut.numberOfDuplicateGenericNames());
+        assertEquals("Number of duplicate generic names", 12, sut.numberOfDuplicateGenericNames());
     }
 
     @Test
@@ -39,11 +39,10 @@ public class MSTest {
     public void returnsCorrectNumberOfMSProductsByCompanyName() {
         assertEquals("Number products by company name", 1124, sut.numberOfMSProductsByProducerName("roche"));
     }
-    //WRONG COUNT 1125
 
-//    @Test
-//    public void returnsCorrectNumberOfMSProductsByGenericNameCategory() {
-//        assertEquals("Number of products whose generic name has a category", 2671,
-//                sut.findMSProductsWithGenericNameCategory("05 - Bolnička, aparaturna oprema").size());
-//    }
+    @Test
+    public void returnsCorrectNumberOfMSProductsByGenericNameCategory() {
+        assertEquals("Number of products whose generic name has a category", 2671,
+                sut.findMSProductsWithGenericNameCategory("05 - Bolnička, aparaturna oprema").size());
+    }
 }
