@@ -49,7 +49,7 @@ public class MSApplication {
      * @param productRows
      * @return
      */
-    public Set<MSProduct> createModel(Set<MSGenericNameRow> genericNameRows, Set<MSProductRow> productRows) {
+    public Set<MSProduct> createModel(final Set<MSGenericNameRow> genericNameRows,final Set<MSProductRow> productRows) {
 
         if (genericNameRows == null || genericNameRows.size() == 0 || productRows == null || productRows.size() == 0) {
             throw new MSException(MSException.NO_DATA);
@@ -90,7 +90,6 @@ public class MSApplication {
     public Object numberOfUniqueGenericNames() {
 
         Map<String, Integer> uniquesProducts = new HashMap<>();
-
         genericNames.forEach(msProduct -> uniquesProducts.merge(msProduct.getName(), 1, Integer::sum));
 
         return uniquesProducts.size();
