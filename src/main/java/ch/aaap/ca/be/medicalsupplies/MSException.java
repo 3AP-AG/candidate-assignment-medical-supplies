@@ -6,6 +6,7 @@ public class MSException extends RuntimeException {
     public static final String DEFAULT_MESSAGE = "Method has not been implemented";
     public static final String PARSE_REGISTRY_CSV_MESSAGE = "Could not parse registry csv";
     public static final String PARSE_GENERIC_NAME_CSV_MESSAGE = "Could not parse generic name csv";
+    public static final String PRODUCT_CONSOLIDATION_MESSAGE = "Failed to consolidate product data with generic names";
 
     public MSException(String message) {
         super(message);
