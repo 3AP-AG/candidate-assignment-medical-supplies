@@ -1,39 +1,38 @@
 package ch.aaap.ca.be.medicalsupplies.model;
 
-import ch.aaap.ca.be.medicalsupplies.data.MSGenericNameRow;
-import ch.aaap.ca.be.medicalsupplies.data.MSProductIdentity;
 import ch.aaap.ca.be.medicalsupplies.data.MSProductRow;
 
-public class MSProduct implements MSProductIdentity {
+public class MSProduct {
+    private ProductIdentity productIdentity;
+    private Producer producer;
+    private LicenseHolder licenseHolder;
+    private Model model;
+    private String[] categories;
 
-    private String id;
-    private String name;
-    private MSGenericNameRow msGenericNameRow;
-    private MSProductRow msProductRow;
-
-    public MSProduct(MSProductRow msProductRow, MSGenericNameRow msGenericNameRow) {
-        this.id = msProductRow.getId();
-        this.name = msGenericNameRow.getName();
-        this.msProductRow = msProductRow;
-        this.msGenericNameRow = msGenericNameRow;
+    public MSProduct(MSProductRow msProductRow) {
+        this.productIdentity = new ProductIdentity(msProductRow);
+        this.producer = new Producer(msProductRow);
+        this.licenseHolder = new LicenseHolder(msProductRow);
+        this.model = new Model(msProductRow);
     }
 
-    @Override
-    public String getID() {
-        return id;
+    public ProductIdentity getProductIdentity() {
+        return productIdentity;
     }
 
-    @Override
-    public String getName() {
-        return name;
+    public Producer getProducer() {
+        return producer;
     }
 
-    public MSGenericNameRow getMsGenericNameRow() {
-        return msGenericNameRow;
+    public LicenseHolder getLicenseHolder() {
+        return licenseHolder;
     }
 
-    public MSProductRow getMsProductRow() {
-        return msProductRow;
+    public String[] getCategories() {
+        return categories;
     }
 
+    public void setCategories(String[] categories) {
+        this.categories = categories;
+    }
 }

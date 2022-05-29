@@ -8,25 +8,24 @@ import ch.aaap.ca.be.medicalsupplies.data.MSGenericNameRow;
 import ch.aaap.ca.be.medicalsupplies.data.MSProductIdentity;
 import ch.aaap.ca.be.medicalsupplies.data.MSProductRow;
 import ch.aaap.ca.be.medicalsupplies.model.MSProduct;
+import ch.aaap.ca.be.medicalsupplies.model.Producer;
 
 public class MSApplication {
 
     private final Set<MSGenericNameRow> genericNames;
     private final Set<MSProductRow> registry;
 
-    private final Map<String, MSGenericNameRow> msGenericNameRowHashMap;
-    private final List<MSProduct> msProductList;
+    private final HashMap<MSProductIdentity, MSProduct> msProductMap;
+    private Map<String, String[]> msGenericNameHashMap;
 
     public MSApplication() {
         genericNames = CSVUtil.getGenericNames();
         registry = CSVUtil.getRegistry();
-        msGenericNameRowHashMap  = createGenericNameRowMap();
-        msProductList = (List<MSProduct>) createModel(genericNames, registry);
+        msProductMap = (HashMap<MSProductIdentity, MSProduct>)createModel(registry, genericNames);
     }
 
     public static void main(String[] args) {
         MSApplication main = new MSApplication();
-
         System.err.println("generic names count: " + main.genericNames.size());
         System.err.println("registry count: " + main.registry.size());
 
@@ -41,40 +40,46 @@ public class MSApplication {
      * @param productRows
      * @return
      */
-    public Object createModel(Set<MSGenericNameRow> genericNameRows, Set<MSProductRow> productRows) {
 
-        List<MSProduct> productList = new ArrayList<>();
+    public Object createModel(Set<MSProductRow> productRows, Set<MSGenericNameRow> genericNameRows) {
+
+        Map<MSProductIdentity, MSProduct> productMap = new HashMap<>();
+        msGenericNameHashMap  = createGenericNameMap(genericNameRows);
 
         try {
-            productRows.forEach(productRow -> {
-                if (productRow.getGenericName() != null && msGenericNameRowHashMap.get(productRow.getGenericName()) != null) {
-                    productList.add(new MSProduct(productRow, msGenericNameRowHashMap.get(productRow.getGenericName())));
+            for (MSProductRow msProductRow: productRows) {
+                MSProduct msProduct = new MSProduct(msProductRow);
+                String[] categories = msGenericNameHashMap.get(msProduct.getProductIdentity().getName());
+                if (categories != null) {
+                    if (!categories[0].equals(msProductRow.getPrimaryCategory()))
+                        System.out.println("WARING: Product: [" + msProductRow.getGenericName() + "] doesn't have same primary category as category1 from Generic data file, categories will be taken from Generic datafile." );
+                    msProduct.setCategories(categories);
                 }
-            });
+                productMap.put(msProduct.getProductIdentity(), msProduct);
+            }
         } catch (Exception e) {
             throw new MSException(MSException.PRODUCT_CONSOLIDATION_MESSAGE);
         }
-        return productList;
+        return productMap;
     }
 
-    private Map<String, MSGenericNameRow> createGenericNameRowMap() {
+    private Map<String, String[]> createGenericNameMap(Set<MSGenericNameRow> genericNameRows) {
+        Map<String, String[]> msGenericNameRowHashMap = new HashMap<>();
 
-        // map to quickly access  MSGenericNameRow element by Name
-        Map<String, MSGenericNameRow> msGenericNameRowHashMap = new HashMap<>();
-
-        // temporary needed to filter out duplicate Names from genericNames
-        Set<String> distinctGNames = new HashSet<>();
-
-        genericNames.forEach(genericName -> {
-            if (genericName.getName() != null && !distinctGNames.contains(genericName.getName())) {
-                distinctGNames.add(genericName.getName());
-                msGenericNameRowHashMap.put(genericName.getName(), genericName);
-            }
-        });
+        genericNameRows.forEach(genericName -> msGenericNameRowHashMap.put(genericName.getName(), msCategories(genericName)));
 
         return msGenericNameRowHashMap;
     }
 
+    private String[] msCategories(MSGenericNameRow msGenericNameRow) {
+        String[]categories = new String[4];
+
+        categories[0] = msGenericNameRow.getCategory1();
+        categories[1] = msGenericNameRow.getCategory2();
+        categories[2] = msGenericNameRow.getCategory3();
+        categories[3] = msGenericNameRow.getCategory4();
+        return categories;
+    }
     /* MS Generic Names */
     /**
      * Method find the number of unique generic names.
@@ -82,7 +87,7 @@ public class MSApplication {
      * @return
      */
     public Object numberOfUniqueGenericNames() {
-        return msGenericNameRowHashMap.size();
+        return msGenericNameHashMap.size();
     }
 
     /**
@@ -91,7 +96,7 @@ public class MSApplication {
      * @return
      */
     public Object numberOfDuplicateGenericNames() {
-        return genericNames.size() - msGenericNameRowHashMap.size();
+        return genericNames.size() - msGenericNameHashMap.size();
     }
 
     /* MS Products */
@@ -102,7 +107,7 @@ public class MSApplication {
      * @return
      */
     public Object numberOfMSProductsWithGenericName() {
-        return msProductList.size();
+        return msProductMap.entrySet().stream().filter(product -> product.getValue().getCategories() != null).collect(Collectors.toList()).size();
     }
 
     /**
@@ -112,7 +117,7 @@ public class MSApplication {
      * @return
      */
     public Object numberOfMSProductsWithoutGenericName() {
-        return registry.size() - msProductList.size();
+        return msProductMap.entrySet().stream().filter(product -> product.getValue().getCategories() == null).collect(Collectors.toList()).size();
     }
 
     /**
@@ -122,20 +127,20 @@ public class MSApplication {
      * @return
      */
     public Object nameOfCompanyWhichIsProducerAndLicenseHolderForMostNumberOfMSProducts() {
-        List<MSProductRow> producersAndLicenseHolders = registry.stream().filter(product -> product.getProducerId().equalsIgnoreCase(product.getLicenseHolderId())).collect(Collectors.toList());
-        Map<String, List<MSProductRow>> groupedProductsByProducerId = producersAndLicenseHolders.stream().collect(Collectors.groupingBy(MSProductRow::getProducerId));
-        Map<String, Integer> countedProductsByProducerId = groupedProductsByProducerId.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().size()));
-        int max = 0;
-        String producerId = null;
+        Map<Producer,List<MSProduct>> filteredProducts = msProductMap.entrySet().stream().map(mapEl -> mapEl.getValue()).filter(product -> product.getProducer().getProducerId().equalsIgnoreCase(product.getLicenseHolder().getLicenseHolderId()))
+                .collect(Collectors.groupingBy(MSProduct::getProducer));
+        String companyName = null;
+        int maxMSProducts = 0;
 
-        for (Map.Entry<String, Integer> entry : countedProductsByProducerId.entrySet()) {
-            if (entry.getValue() > max) {
-                max = entry.getValue();
-                producerId = entry.getKey();
+        for (Map.Entry<Producer,List<MSProduct>> producerEntry : filteredProducts.entrySet()) {
+            if (producerEntry.getValue().size() > maxMSProducts) {
+                maxMSProducts = producerEntry.getValue().size();
+                companyName = producerEntry.getKey().getProducerName();
             }
         }
-        return groupedProductsByProducerId.get(producerId).get(0).getProducerName();
+        return companyName;
     }
+
     /**
      * Method finds the number of products whose producer name starts with
      * <i>companyName</i>.
@@ -144,7 +149,7 @@ public class MSApplication {
      * @return
      */
     public Object numberOfMSProductsByProducerName(String companyName) {
-        return registry.stream().filter(product -> product.getProducerName().toLowerCase().startsWith(companyName)).collect(Collectors.toList()).size();
+        return msProductMap.entrySet().stream().filter(product -> product.getValue().getProducer().getProducerName().toLowerCase().startsWith(companyName)).collect(Collectors.toList()).size();
     }
 
     /**
@@ -154,9 +159,17 @@ public class MSApplication {
      * @return
      */
     public Set<MSProductIdentity> findMSProductsWithGenericNameCategory(String category) {
-        return msProductList.stream().filter(msProduct ->  msProduct.getMsGenericNameRow().getCategory1().equalsIgnoreCase(category)
-                || msProduct.getMsGenericNameRow().getCategory2().equalsIgnoreCase(category)
-                || msProduct.getMsGenericNameRow().getCategory3().equalsIgnoreCase(category)
-                || msProduct.getMsGenericNameRow().getCategory4().equalsIgnoreCase(category)).collect(Collectors.toSet());
+        return msProductMap.entrySet().stream().filter(product -> hasCategory(product.getValue().getCategories(), category)).map(p -> p.getKey()).collect(Collectors.toSet());
+    }
+
+    boolean hasCategory (String[] categories, String categoryName) {
+        if (categories == null)
+            return false;
+        else {
+              for (int i = 0; i < 4; i++)
+                  if (categories[i].equalsIgnoreCase(categoryName))
+                      return true;
+        }
+        return false;
     }
 }
