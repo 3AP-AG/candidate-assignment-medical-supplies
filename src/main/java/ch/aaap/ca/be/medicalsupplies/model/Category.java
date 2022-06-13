@@ -6,8 +6,8 @@ public class Category {
     private String name;
 
     public Category(String category) {
-        this.code = category.substring(0, 2);
-        this.name = category.substring(5, category.length());
+        this.code = category != null ? category.substring(0, 2) : null;
+        this.name = category != null ? category.substring(5, category.length()) : null;
     }
 
     public String getCode() {
