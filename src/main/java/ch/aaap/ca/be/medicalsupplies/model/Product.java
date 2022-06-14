@@ -23,10 +23,6 @@ public class Product implements MSProductIdentity {
         this.licenseHolder = new Company(Integer.valueOf(productRow.getLicenseHolderId()), productRow.getLicenseHolderName(), productRow.getLicenseHolderAddress());
     }
 
-    public String getId() {
-        return id;
-    }
-
     public GenericProduct getGenericProduct() {
         return genericProduct;
     }
