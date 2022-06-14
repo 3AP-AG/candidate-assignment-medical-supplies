@@ -31,10 +31,6 @@ public class Product implements MSProductIdentity {
         return genericProduct;
     }
 
-    public void setGenericProduct(GenericProduct genericProduct) {
-        this.genericProduct = genericProduct;
-    }
-
     @Override
     public String getID() {
         return id;

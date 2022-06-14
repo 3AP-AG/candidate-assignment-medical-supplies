@@ -9,17 +9,7 @@ public class GenericProductCategory {
     private Category category;
     private Set<Category> categories;
 
-    public GenericProductCategory(MSGenericNameRow genericNameRow) {
-        List<String> categoryStrings = Arrays.asList(genericNameRow.getCategory1(), genericNameRow.getCategory2(), genericNameRow.getCategory3(), genericNameRow.getCategory4());
-
-        // get categories
-        Set<Category> categoriesSet = new HashSet<>();
-        categoryStrings.forEach(categoryString -> {
-            if (categoryString != null && !categoryString.isEmpty()) {
-                Category category =new Category(categoryString);
-                categoriesSet.add(category);
-            }
-        });
+    public GenericProductCategory(MSGenericNameRow genericNameRow, Set<Category> categoriesSet) {
         this.genericProduct = new GenericProduct(genericNameRow);
         this.categories = categoriesSet;
     }

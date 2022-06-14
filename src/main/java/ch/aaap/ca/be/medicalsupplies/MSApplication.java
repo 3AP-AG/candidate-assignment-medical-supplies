@@ -1,15 +1,16 @@
 package ch.aaap.ca.be.medicalsupplies;
 
-import java.io.Serializable;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-
 import ch.aaap.ca.be.medicalsupplies.data.CSVUtil;
 import ch.aaap.ca.be.medicalsupplies.data.MSGenericNameRow;
 import ch.aaap.ca.be.medicalsupplies.data.MSProductIdentity;
 import ch.aaap.ca.be.medicalsupplies.data.MSProductRow;
-import ch.aaap.ca.be.medicalsupplies.model.*;
+import ch.aaap.ca.be.medicalsupplies.model.Category;
+import ch.aaap.ca.be.medicalsupplies.model.GenericProduct;
+import ch.aaap.ca.be.medicalsupplies.model.GenericProductCategory;
+import ch.aaap.ca.be.medicalsupplies.model.Product;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class MSApplication {
 
@@ -48,16 +49,26 @@ public class MSApplication {
 
         Map<String, Category> categories = new HashMap<>();
         genericProducts = new HashMap<>();
-
-        final AtomicInteger genericProductCategoryId = new AtomicInteger(0);
         genericProductCategories = new HashMap<>();
 
         genericNameRows.forEach(genericNameRow -> {
+            /*
+             * populate categories
+             */
+            List<String> categoryStrings = Arrays.asList(genericNameRow.getCategory1(), genericNameRow.getCategory2(), genericNameRow.getCategory3(), genericNameRow.getCategory4());
+            Set<Category> categoriesSet = new HashSet<>();
+            categoryStrings.forEach(categoryString -> {
+                if (categoryString != null && !categoryString.isEmpty()) {
+                    Category category =new Category(categoryString);
+                    categories.put(categoryString, category);
+                    categoriesSet.add(category);
+                }
+            });
 
             /*
              * populate genericProductCategory
              */
-            GenericProductCategory genericProductCategory = new GenericProductCategory(genericNameRow);
+            GenericProductCategory genericProductCategory = new GenericProductCategory(genericNameRow, categoriesSet);
             GenericProduct genericProduct = genericProductCategory.getGenericProduct();
             genericProductCategories.put(genericProduct, genericProductCategory);
 
@@ -76,9 +87,6 @@ public class MSApplication {
              */
             products.put(productRow.getId(), new Product(productRow, genericProducts, categories));
         });
-
-        //System.out.println("genericProducts: " + genericProducts.size());
-        //System.out.println("products: " + products.size());
 
         return products;
     }
@@ -180,7 +188,7 @@ public class MSApplication {
                 .values()
                 .stream()
                 .filter(product -> genericProductCategories.get(product.getGenericProduct()) != null
-                        && genericProductCategories.get(product.getGenericProduct()).getCategories().stream().anyMatch(cat -> cat.getName().equalsIgnoreCase(category.substring(5, category.length()))))
+                                    && genericProductCategories.get(product.getGenericProduct()).getCategories().contains(new Category(category)))
                 .collect(Collectors.toSet());
     }
 }
