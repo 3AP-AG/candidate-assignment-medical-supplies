@@ -8,8 +8,8 @@ public class Category {
     private String name;
 
     public Category(String category) {
-        this.code = category != null ? category.substring(0, 2) : null;
-        this.name = category != null ? category.substring(5, category.length()) : null;
+        this.code = (category != null && !category.isEmpty()) ? category.substring(0, 2) : null;
+        this.name = (category != null && !category.isEmpty()) ? category.substring(5, category.length()) : null;
     }
 
     public String getCode() {

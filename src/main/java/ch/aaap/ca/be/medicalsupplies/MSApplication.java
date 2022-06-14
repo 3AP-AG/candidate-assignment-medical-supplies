@@ -9,15 +9,23 @@ import ch.aaap.ca.be.medicalsupplies.model.GenericProduct;
 import ch.aaap.ca.be.medicalsupplies.model.GenericProductCategory;
 import ch.aaap.ca.be.medicalsupplies.model.Product;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static java.util.Comparator.comparingInt;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 public class MSApplication {
 
     private final Set<MSGenericNameRow> genericNames;
     private final Set<MSProductRow> registry;
 
-    private static Map<String, GenericProduct> genericProducts;
     private static Map<String, Product> products;
     private static Map<GenericProduct, GenericProductCategory> genericProductCategories;
 
@@ -48,7 +56,7 @@ public class MSApplication {
     public Object createModel(Set<MSGenericNameRow> genericNameRows, Set<MSProductRow> productRows) {
 
         Map<String, Category> categories = new HashMap<>();
-        genericProducts = new HashMap<>();
+        Map<String, GenericProduct> genericProducts = new HashMap<>();
         genericProductCategories = new HashMap<>();
 
         genericNameRows.forEach(genericNameRow -> {
@@ -66,16 +74,15 @@ public class MSApplication {
             });
 
             /*
-             * populate genericProductCategory
-             */
-            GenericProductCategory genericProductCategory = new GenericProductCategory(genericNameRow, categoriesSet);
-            GenericProduct genericProduct = genericProductCategory.getGenericProduct();
-            genericProductCategories.put(genericProduct, genericProductCategory);
-
-            /*
              * populate genericProducts
              */
+            GenericProduct genericProduct = new GenericProduct(genericNameRow);
             genericProducts.put(genericNameRow.getName(), genericProduct);
+
+            /*
+             * populate genericProductCategory
+             */
+            genericProductCategories.put(genericProduct, new GenericProductCategory(genericProduct, categoriesSet));
 
         });
 
@@ -93,12 +100,12 @@ public class MSApplication {
 
     /* MS Generic Names */
     /**
-     * Method find the number of unique generic names.
+     * Method finds the number of unique generic names.
      * 
      * @return
      */
     public Object numberOfUniqueGenericNames() {
-        return genericProducts.size();
+        return genericProductCategories.size();
     }
 
     /**
@@ -107,7 +114,7 @@ public class MSApplication {
      * @return
      */
     public Object numberOfDuplicateGenericNames() {
-        return genericNames.size() - genericProducts.size();
+        return genericNames.size() - genericProductCategories.size();
     }
 
     /* MS Products */
@@ -122,8 +129,8 @@ public class MSApplication {
                 .values()
                 .stream()
                 .filter(product -> product.getGenericProduct() != null)
-                .collect(Collectors.toList())
-                .size();
+                .collect(toList())
+                .size(); // .count() can be used instead of .collect(...).size() however the return type is long (typ mismatch with the provided tests)
     }
 
     /**
@@ -137,8 +144,8 @@ public class MSApplication {
                 .values()
                 .stream()
                 .filter(product -> product.getGenericProduct() == null)
-                .collect(Collectors.toList())
-                .size();
+                .collect(toList())
+                .size(); // .count() can be used instead of .collect(...).size() however the return type is long (typ mismatch with the provided tests)
     }
 
     /**
@@ -152,10 +159,10 @@ public class MSApplication {
                 .values()
                 .stream()
                 .filter(product -> product.getProducer().getId().equals(product.getLicenseHolder().getId()))
-                .collect(Collectors.groupingBy(Product::getProducer))
+                .collect(groupingBy(Product::getProducer))
                 .entrySet()
                 .stream()
-                .max(Comparator.comparingInt(l -> l.getValue().size()))
+                .max(comparingInt(entry -> entry.getValue().size()))
                 .orElse(null)
                 .getKey()
                 .getName();
@@ -173,8 +180,8 @@ public class MSApplication {
                 .values()
                 .stream()
                 .filter(product -> product.getProducer().getName().toLowerCase().startsWith(companyName))
-                .collect(Collectors.toList())
-                .size();
+                .collect(toList())
+                .size(); // .count() can be used instead of .collect(...).size() however the return type is long (typ mismatch with the provided tests)
     }
 
     /**
@@ -189,6 +196,6 @@ public class MSApplication {
                 .stream()
                 .filter(product -> genericProductCategories.get(product.getGenericProduct()) != null
                                     && genericProductCategories.get(product.getGenericProduct()).getCategories().contains(new Category(category)))
-                .collect(Collectors.toSet());
+                .collect(toSet());
     }
 }
