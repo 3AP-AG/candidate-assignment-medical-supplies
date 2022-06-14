@@ -1,41 +1,39 @@
 package ch.aaap.ca.be.medicalsupplies.model;
 
-import java.util.Objects;
+import ch.aaap.ca.be.medicalsupplies.data.MSGenericNameRow;
+
+import java.util.*;
 
 public class GenericProductCategory {
-
-    private Integer id;
     private GenericProduct genericProduct;
     private Category category;
+    private Set<Category> categories;
 
-    public GenericProductCategory(Integer id, GenericProduct genericProduct, Category category) {
-        this.id = id;
-        this.genericProduct = genericProduct;
-        this.category = category;
-    }
+    public GenericProductCategory(MSGenericNameRow genericNameRow) {
+        List<String> categoryStrings = Arrays.asList(genericNameRow.getCategory1(), genericNameRow.getCategory2(), genericNameRow.getCategory3(), genericNameRow.getCategory4());
 
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
+        // get categories
+        Set<Category> categoriesSet = new HashSet<>();
+        categoryStrings.forEach(categoryString -> {
+            if (categoryString != null && !categoryString.isEmpty()) {
+                Category category =new Category(categoryString);
+                categoriesSet.add(category);
+            }
+        });
+        this.genericProduct = new GenericProduct(genericNameRow);
+        this.categories = categoriesSet;
     }
 
     public GenericProduct getGenericProduct() {
         return genericProduct;
     }
 
-    public void setGenericProduct(GenericProduct genericProduct) {
-        this.genericProduct = genericProduct;
-    }
-
     public Category getCategory() {
         return category;
     }
 
-    public void setCategory(Category category) {
-        this.category = category;
+    public Set<Category> getCategories() {
+        return categories;
     }
 
     @Override

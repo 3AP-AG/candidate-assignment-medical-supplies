@@ -18,7 +18,7 @@ public class MSApplication {
 
     private static Map<String, GenericProduct> genericProducts;
     private static Map<String, Product> products;
-    private static Set<GenericProductCategory> genericProductCategories;
+    private static Map<GenericProduct, GenericProductCategory> genericProductCategories;
 
     public MSApplication() {
         genericNames = CSVUtil.getGenericNames();
@@ -50,76 +50,37 @@ public class MSApplication {
         genericProducts = new HashMap<>();
 
         final AtomicInteger genericProductCategoryId = new AtomicInteger(0);
-        genericProductCategories = new HashSet<>();
+        genericProductCategories = new HashMap<>();
 
         genericNameRows.forEach(genericNameRow -> {
 
-            // get categories
-            String category1String = (genericNameRow.getCategory1() == null || genericNameRow.getCategory1().isEmpty()) ? null : genericNameRow.getCategory1();
-            String category2String = (genericNameRow.getCategory2() == null || genericNameRow.getCategory2().isEmpty()) ? null : genericNameRow.getCategory2();
-            String category3String = (genericNameRow.getCategory3() == null || genericNameRow.getCategory3().isEmpty()) ? null : genericNameRow.getCategory3();
-            String category4String = (genericNameRow.getCategory4() == null || genericNameRow.getCategory4().isEmpty()) ? null : genericNameRow.getCategory4();
+            /*
+             * populate genericProductCategory
+             */
+            GenericProductCategory genericProductCategory = new GenericProductCategory(genericNameRow);
+            GenericProduct genericProduct = genericProductCategory.getGenericProduct();
+            genericProductCategories.put(genericProduct, genericProductCategory);
 
-            Category category1 = category1String == null ? null : new Category(category1String);
-            Category category2 = category2String == null ? null : new Category(category2String);
-            Category category3 = category3String == null ? null : new Category(category3String);
-            Category category4 = category4String == null ? null : new Category(category4String);
-
-            if (category1String != null) categories.put(category1String, category1);
-            if (category2String != null) categories.put(category2String, category2);
-            if (category3String != null) categories.put(category3String, category3);
-            if (category4String != null) categories.put(category4String, category4);
-
-            // get generic products
-            String genericName = genericNameRow.getName();
-            GenericProduct genericProduct = new GenericProduct(genericName);
-            genericProducts.put(genericName, genericProduct);
-
-            // get generic product category
-            if (category1String != null) genericProductCategories.add(new GenericProductCategory(genericProductCategoryId.incrementAndGet(), genericProduct, category1));
-            if (category2String != null) genericProductCategories.add(new GenericProductCategory(genericProductCategoryId.incrementAndGet(), genericProduct, category2));
-            if (category3String != null) genericProductCategories.add(new GenericProductCategory(genericProductCategoryId.incrementAndGet(), genericProduct, category3));
-            if (category4String != null) genericProductCategories.add(new GenericProductCategory(genericProductCategoryId.incrementAndGet(), genericProduct, category4));
+            /*
+             * populate genericProducts
+             */
+            genericProducts.put(genericNameRow.getName(), genericProduct);
 
         });
 
-        Map<Integer, Company> companies = new HashMap<>();
         products = new HashMap<>();
 
         productRows.forEach(productRow -> {
-
-            /*
-             * Populate companies
-             */
-            // add producer to companies
-            Integer producerId = Integer.valueOf(productRow.getProducerId());
-            Company producer = new Company(producerId, productRow.getProducerName(), productRow.getProducerAddress());
-            companies.put(producerId, producer);
-
-            // add license holder to companies
-            // in the case where producerId = licenseHolderId, producer info will be taken
-            Integer licenseHolderId = Integer.valueOf(productRow.getLicenseHolderId());
-            Company licenseHolder = new Company(licenseHolderId, productRow.getLicenseHolderName(), productRow.getLicenseHolderAddress());
-            companies.put(licenseHolderId, licenseHolder);
-
             /*
              * Populate products
              */
-            String productId = productRow.getId();
-            String genericName = productRow.getGenericName();
-            GenericProduct genericProduct = genericProducts.get(genericName);
-            String name = productRow.getName();
-            Category category = categories.get(productRow.getPrimaryCategory());
-
-            Product product = new Product(productId, genericProduct, name, category, producer, licenseHolder);
-            products.put(productId, product);
+            products.put(productRow.getId(), new Product(productRow, genericProducts, categories));
         });
 
-        //System.out.println("products: " + products.size());
         //System.out.println("genericProducts: " + genericProducts.size());
+        //System.out.println("products: " + products.size());
 
-        return null;
-        //throw new MSException(MSException.DEFAULT_MESSAGE);
+        return products;
     }
 
     /* MS Generic Names */
@@ -179,26 +140,17 @@ public class MSApplication {
      * @return
      */
     public Object nameOfCompanyWhichIsProducerAndLicenseHolderForMostNumberOfMSProducts() {
-        Map<Company, List<Product>> prods = products
+        return products
                 .values()
                 .stream()
                 .filter(product -> product.getProducer().getId().equals(product.getLicenseHolder().getId()))
                 .collect(Collectors.groupingBy(Product::getProducer))
                 .entrySet()
                 .stream()
-                .sorted(Comparator.comparingInt(l -> l.getValue().size()))
-                .collect(Collectors.toMap(
-                                    Map.Entry::getKey,
-                                    Map.Entry::getValue,
-                                    (a, b) -> { throw new AssertionError();},
-                                    LinkedHashMap::new));
-
-        List<Map.Entry<Company, List<Product>>> list = new ArrayList<>(prods.entrySet());
-        Map.Entry<Company, List<Product>> lastEntry = list.get(list.size()-1);
-
-        //System.out.println("company: " + lastEntry.getKey().getName() + " size: " + lastEntry.getValue().size());
-
-        return lastEntry.getKey().getName();
+                .max(Comparator.comparingInt(l -> l.getValue().size()))
+                .orElse(null)
+                .getKey()
+                .getName();
     }
 
     /**
@@ -227,15 +179,8 @@ public class MSApplication {
         return products
                 .values()
                 .stream()
-                .filter(product -> getCategoriesForGenericProduct(product.getGenericProduct()).contains(category.substring(5, category.length())))
-                .collect(Collectors.toSet());
-    }
-
-    private Set<String> getCategoriesForGenericProduct(GenericProduct genericProduct) {
-        return genericProductCategories
-                .stream()
-                .filter(cat -> cat.getGenericProduct().equals(genericProduct))
-                .map(c -> c.getCategory().getName())
+                .filter(product -> genericProductCategories.get(product.getGenericProduct()) != null
+                        && genericProductCategories.get(product.getGenericProduct()).getCategories().stream().anyMatch(cat -> cat.getName().equalsIgnoreCase(category.substring(5, category.length()))))
                 .collect(Collectors.toSet());
     }
 }

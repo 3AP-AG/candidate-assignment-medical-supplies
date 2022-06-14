@@ -1,6 +1,9 @@
 package ch.aaap.ca.be.medicalsupplies.model;
 
 import ch.aaap.ca.be.medicalsupplies.data.MSProductIdentity;
+import ch.aaap.ca.be.medicalsupplies.data.MSProductRow;
+
+import java.util.Map;
 
 public class Product implements MSProductIdentity {
 
@@ -11,22 +14,17 @@ public class Product implements MSProductIdentity {
     private Company producer;
     private Company licenseHolder;
 
-
-    public Product(String id, GenericProduct genericProduct, String name, Category primaryCategory, Company producer, Company licenseHolder) {
-        this.id = id;
-        this.genericProduct = genericProduct;
-        this.name = name;
-        this.primaryCategory = primaryCategory;
-        this.producer = producer;
-        this.licenseHolder = licenseHolder;
+    public Product(MSProductRow productRow, Map<String, GenericProduct> genericProducts, Map<String, Category> categories) {
+        this.id = productRow.getId();
+        this.genericProduct = genericProducts.get(productRow.getGenericName());
+        this.name = productRow.getName();
+        this.primaryCategory = categories.get(productRow.getPrimaryCategory());
+        this.producer = new Company(Integer.valueOf(productRow.getProducerId()), productRow.getProducerName(), productRow.getProducerAddress());
+        this.licenseHolder = new Company(Integer.valueOf(productRow.getLicenseHolderId()), productRow.getLicenseHolderName(), productRow.getLicenseHolderAddress());
     }
 
     public String getId() {
         return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public GenericProduct getGenericProduct() {
@@ -42,35 +40,20 @@ public class Product implements MSProductIdentity {
         return id;
     }
 
+    @Override
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public Category getPrimaryCategory() {
         return primaryCategory;
     }
 
-    public void setPrimaryCategory(Category primaryCategory) {
-        this.primaryCategory = primaryCategory;
-    }
-
     public Company getProducer() {
         return producer;
     }
 
-    public void setProducer(Company producer) {
-        this.producer = producer;
-    }
-
     public Company getLicenseHolder() {
         return licenseHolder;
-    }
-
-    public void setLicenseHolder(Company licenseHolder) {
-        this.licenseHolder = licenseHolder;
     }
 }
