@@ -1,5 +1,7 @@
 package ch.aaap.ca.be.medicalsupplies.model;
 
+import java.util.Objects;
+
 public class Company {
 
     private Integer id;
@@ -34,5 +36,18 @@ public class Company {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Company)) return false;
+        Company company = (Company) o;
+        return id.equals(company.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

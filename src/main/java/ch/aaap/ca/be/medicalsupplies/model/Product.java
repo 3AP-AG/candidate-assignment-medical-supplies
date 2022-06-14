@@ -1,6 +1,8 @@
 package ch.aaap.ca.be.medicalsupplies.model;
 
-public class Product {
+import ch.aaap.ca.be.medicalsupplies.data.MSProductIdentity;
+
+public class Product implements MSProductIdentity {
 
     private String id;
     private GenericProduct genericProduct;
@@ -8,6 +10,7 @@ public class Product {
     private Category primaryCategory;
     private Company producer;
     private Company licenseHolder;
+
 
     public Product(String id, GenericProduct genericProduct, String name, Category primaryCategory, Company producer, Company licenseHolder) {
         this.id = id;
@@ -32,6 +35,11 @@ public class Product {
 
     public void setGenericProduct(GenericProduct genericProduct) {
         this.genericProduct = genericProduct;
+    }
+
+    @Override
+    public String getID() {
+        return id;
     }
 
     public String getName() {
