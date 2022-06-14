@@ -18,6 +18,7 @@ public class MSApplication {
 
     private static Map<String, GenericProduct> genericProducts;
     private static Map<String, Product> products;
+    private static Set<GenericProductCategory> genericProductCategories;
 
     public MSApplication() {
         genericNames = CSVUtil.getGenericNames();
@@ -49,7 +50,7 @@ public class MSApplication {
         genericProducts = new HashMap<>();
 
         final AtomicInteger genericProductCategoryId = new AtomicInteger(0);
-        Set<GenericProductCategory> genericProductCategories = new HashSet<>();
+        genericProductCategories = new HashSet<>();
 
         genericNameRows.forEach(genericNameRow -> {
 
@@ -223,6 +224,18 @@ public class MSApplication {
      * @return
      */
     public Set<MSProductIdentity> findMSProductsWithGenericNameCategory(String category) {
-        throw new MSException(MSException.DEFAULT_MESSAGE);
+        return products
+                .values()
+                .stream()
+                .filter(product -> getCategoriesForGenericProduct(product.getGenericProduct()).contains(category.substring(5, category.length())))
+                .collect(Collectors.toSet());
+    }
+
+    private Set<String> getCategoriesForGenericProduct(GenericProduct genericProduct) {
+        return genericProductCategories
+                .stream()
+                .filter(cat -> cat.getGenericProduct().equals(genericProduct))
+                .map(c -> c.getCategory().getName())
+                .collect(Collectors.toSet());
     }
 }
