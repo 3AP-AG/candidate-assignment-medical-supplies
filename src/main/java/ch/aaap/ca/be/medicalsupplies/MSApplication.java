@@ -1,20 +1,39 @@
 package ch.aaap.ca.be.medicalsupplies;
 
-import java.util.Set;
-
 import ch.aaap.ca.be.medicalsupplies.data.CSVUtil;
 import ch.aaap.ca.be.medicalsupplies.data.MSGenericNameRow;
 import ch.aaap.ca.be.medicalsupplies.data.MSProductIdentity;
 import ch.aaap.ca.be.medicalsupplies.data.MSProductRow;
+import ch.aaap.ca.be.medicalsupplies.model.Category;
+import ch.aaap.ca.be.medicalsupplies.model.GenericProduct;
+import ch.aaap.ca.be.medicalsupplies.model.GenericProductCategory;
+import ch.aaap.ca.be.medicalsupplies.model.Product;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static java.util.Comparator.comparingInt;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 public class MSApplication {
 
     private final Set<MSGenericNameRow> genericNames;
     private final Set<MSProductRow> registry;
 
+    private static Map<String, Product> products;
+    private static Map<GenericProduct, GenericProductCategory> genericProductCategories;
+
     public MSApplication() {
         genericNames = CSVUtil.getGenericNames();
         registry = CSVUtil.getRegistry();
+
+        createModel(genericNames, registry);
     }
 
     public static void main(String[] args) {
@@ -35,17 +54,50 @@ public class MSApplication {
      * @return
      */
     public Object createModel(Set<MSGenericNameRow> genericNameRows, Set<MSProductRow> productRows) {
-        throw new MSException(MSException.DEFAULT_MESSAGE);
+
+        genericProductCategories = new HashMap<>();
+
+        genericNameRows.forEach(genericNameRow -> {
+            /*
+             * populate categories
+             */
+            List<String> categoryStrings = Arrays.asList(genericNameRow.getCategory1(), genericNameRow.getCategory2(), genericNameRow.getCategory3(), genericNameRow.getCategory4());
+            Set<Category> categoriesSet = new HashSet<>();
+            categoryStrings.forEach(categoryString -> {
+                if (categoryString != null && !categoryString.isEmpty()) {
+                    Category category =new Category(categoryString);
+                    categoriesSet.add(category);
+                }
+            });
+
+            /*
+             * populate genericProductCategory
+             */
+            GenericProduct genericProduct = new GenericProduct(genericNameRow);
+            genericProductCategories.put(genericProduct, new GenericProductCategory(genericProduct, categoriesSet));
+
+        });
+
+        products = new HashMap<>();
+
+        productRows.forEach(productRow -> {
+            /*
+             * Populate products
+             */
+            products.put(productRow.getId(), new Product(productRow));
+        });
+
+        return products;
     }
 
     /* MS Generic Names */
     /**
-     * Method find the number of unique generic names.
+     * Method finds the number of unique generic names.
      * 
      * @return
      */
     public Object numberOfUniqueGenericNames() {
-        throw new MSException(MSException.DEFAULT_MESSAGE);
+        return genericProductCategories.size();
     }
 
     /**
@@ -54,7 +106,7 @@ public class MSApplication {
      * @return
      */
     public Object numberOfDuplicateGenericNames() {
-        throw new MSException(MSException.DEFAULT_MESSAGE);
+        return genericNames.size() - genericProductCategories.size();
     }
 
     /* MS Products */
@@ -65,7 +117,12 @@ public class MSApplication {
      * @return
      */
     public Object numberOfMSProductsWithGenericName() {
-        throw new MSException(MSException.DEFAULT_MESSAGE);
+        return products
+                .values()
+                .stream()
+                .filter(product -> genericProductCategories.keySet().contains(product.getGenericProduct()))
+                .collect(toList())
+                .size(); // .count() can be used instead of .collect(...).size() however the return type is long (typ mismatch with the provided tests)
     }
 
     /**
@@ -75,7 +132,12 @@ public class MSApplication {
      * @return
      */
     public Object numberOfMSProductsWithoutGenericName() {
-        throw new MSException(MSException.DEFAULT_MESSAGE);
+        return products
+                .values()
+                .stream()
+                .filter(product -> !genericProductCategories.keySet().contains(product.getGenericProduct()))
+                .collect(toList())
+                .size(); // .count() can be used instead of .collect(...).size() however the return type is long (typ mismatch with the provided tests)
     }
 
     /**
@@ -85,7 +147,17 @@ public class MSApplication {
      * @return
      */
     public Object nameOfCompanyWhichIsProducerAndLicenseHolderForMostNumberOfMSProducts() {
-        throw new MSException(MSException.DEFAULT_MESSAGE);
+        return products
+                .values()
+                .stream()
+                .filter(product -> product.getProducer().getId().equals(product.getLicenseHolder().getId()))
+                .collect(groupingBy(Product::getProducer))
+                .entrySet()
+                .stream()
+                .max(comparingInt(entry -> entry.getValue().size()))
+                .orElse(null)
+                .getKey()
+                .getName();
     }
 
     /**
@@ -96,7 +168,12 @@ public class MSApplication {
      * @return
      */
     public Object numberOfMSProductsByProducerName(String companyName) {
-        throw new MSException(MSException.DEFAULT_MESSAGE);
+        return products
+                .values()
+                .stream()
+                .filter(product -> product.getProducer().getName().toLowerCase().startsWith(companyName))
+                .collect(toList())
+                .size(); // .count() can be used instead of .collect(...).size() however the return type is long (typ mismatch with the provided tests)
     }
 
     /**
@@ -106,6 +183,11 @@ public class MSApplication {
      * @return
      */
     public Set<MSProductIdentity> findMSProductsWithGenericNameCategory(String category) {
-        throw new MSException(MSException.DEFAULT_MESSAGE);
+        return products
+                .values()
+                .stream()
+                .filter(product -> genericProductCategories.get(product.getGenericProduct()) != null
+                                    && genericProductCategories.get(product.getGenericProduct()).getCategories().contains(new Category(category)))
+                .collect(toSet());
     }
 }
