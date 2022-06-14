@@ -14,11 +14,11 @@ public class Product implements MSProductIdentity {
     private Company producer;
     private Company licenseHolder;
 
-    public Product(MSProductRow productRow, Map<String, GenericProduct> genericProducts, Map<String, Category> categories) {
+    public Product(MSProductRow productRow) {
         this.id = productRow.getId();
-        this.genericProduct = genericProducts.get(productRow.getGenericName());
+        this.genericProduct = new GenericProduct(productRow.getGenericName());
         this.name = productRow.getName();
-        this.primaryCategory = categories.get(productRow.getPrimaryCategory());
+        this.primaryCategory = new Category(productRow.getPrimaryCategory());
         this.producer = new Company(Integer.valueOf(productRow.getProducerId()), productRow.getProducerName(), productRow.getProducerAddress());
         this.licenseHolder = new Company(Integer.valueOf(productRow.getLicenseHolderId()), productRow.getLicenseHolderName(), productRow.getLicenseHolderAddress());
     }

@@ -55,8 +55,6 @@ public class MSApplication {
      */
     public Object createModel(Set<MSGenericNameRow> genericNameRows, Set<MSProductRow> productRows) {
 
-        Map<String, Category> categories = new HashMap<>();
-        Map<String, GenericProduct> genericProducts = new HashMap<>();
         genericProductCategories = new HashMap<>();
 
         genericNameRows.forEach(genericNameRow -> {
@@ -68,20 +66,14 @@ public class MSApplication {
             categoryStrings.forEach(categoryString -> {
                 if (categoryString != null && !categoryString.isEmpty()) {
                     Category category =new Category(categoryString);
-                    categories.put(categoryString, category);
                     categoriesSet.add(category);
                 }
             });
 
             /*
-             * populate genericProducts
-             */
-            GenericProduct genericProduct = new GenericProduct(genericNameRow);
-            genericProducts.put(genericNameRow.getName(), genericProduct);
-
-            /*
              * populate genericProductCategory
              */
+            GenericProduct genericProduct = new GenericProduct(genericNameRow);
             genericProductCategories.put(genericProduct, new GenericProductCategory(genericProduct, categoriesSet));
 
         });
@@ -92,7 +84,7 @@ public class MSApplication {
             /*
              * Populate products
              */
-            products.put(productRow.getId(), new Product(productRow, genericProducts, categories));
+            products.put(productRow.getId(), new Product(productRow));
         });
 
         return products;
@@ -128,7 +120,7 @@ public class MSApplication {
         return products
                 .values()
                 .stream()
-                .filter(product -> product.getGenericProduct() != null)
+                .filter(product -> genericProductCategories.keySet().contains(product.getGenericProduct()))
                 .collect(toList())
                 .size(); // .count() can be used instead of .collect(...).size() however the return type is long (typ mismatch with the provided tests)
     }
@@ -143,7 +135,7 @@ public class MSApplication {
         return products
                 .values()
                 .stream()
-                .filter(product -> product.getGenericProduct() == null)
+                .filter(product -> !genericProductCategories.keySet().contains(product.getGenericProduct()))
                 .collect(toList())
                 .size(); // .count() can be used instead of .collect(...).size() however the return type is long (typ mismatch with the provided tests)
     }

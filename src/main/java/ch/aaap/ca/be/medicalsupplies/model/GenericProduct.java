@@ -12,6 +12,10 @@ public class GenericProduct {
         this.genericName = genericNameRow.getName();
     }
 
+    public GenericProduct(String genericName) {
+        this.genericName = genericName;
+    }
+
     public String getGenericName() {
         return genericName;
     }
